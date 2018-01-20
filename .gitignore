@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/JiraImportFileGenerator/bin/Debug
+/JiraImportFileGenerator/obj/Debug
+/JiraImportFileGenerator/.vs/JiraImportFileGenerator/v15
