@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using JiraImportFileGenerator;
 
 namespace CodeCleanUpResharperToJiraConverter
 {
@@ -17,26 +18,15 @@ namespace CodeCleanUpResharperToJiraConverter
         private const string IssueTable = "Issue";
         private const string IssueTypeTable = "IssueType";
         private const string CategoryColumn = "Category";
-
         private const string JiraCsvExtension = ".Jira.csv";
-
         private const string IdColumn = "Id";
-
-        private const string VStudioCodeAnalysis = "VStudioCodeAnalysis";
-
-        private const string Resharper = "Resharper";
-
-        private const string ActivationPortalUrl = "https://github.com/DFRedKnee/turnkey-converged-billing-activation-portal.git";
-        private const string WebSelfCareUrl = "https://github.com/DFRedKnee/turnkey-converged-billing-web-self-care.git";
-
-
+ 
         #endregion
         #region Private fields
 
         private string _filePath;
         private DataSet _dataSet;
-
-        private string _inputType = "";
+        private InputType _inputType = InputType.Undefined;
 
         #endregion
         #region Consts
@@ -49,9 +39,9 @@ namespace CodeCleanUpResharperToJiraConverter
         #endregion
         #region Event handlers
 
-        private void btnLoadIssues_Click(object sender, EventArgs e)
+        private void btnLoadResharperIssues_Click(object sender, EventArgs e)
         {
-            _inputType = Resharper;
+            _inputType = InputType.Resharper;
 
             var dialog = new OpenFileDialog
             {
@@ -68,11 +58,40 @@ namespace CodeCleanUpResharperToJiraConverter
 
                 PopulateIssuesGrid();
                 PopulateCategoryCombo();
+                cmbxIssueCategory.Visible = true;
+                cmbxIssueType.Visible = true;
+                btnFilter.Visible = true;
 
                 UpdateLabels();
             }
         }
 
+        private void btnLoadVSCodeMeterics_Click(object sender, EventArgs e)
+        {
+            _inputType = InputType.VisualStudioCodeMetrics;
+
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Csv files | *.csv",
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                _filePath = dialog.FileName;
+
+                _dataSet = new DataSet();
+                var dataTable = GetDataTableFromCsv(_filePath, false);
+                _dataSet.Tables.Add(dataTable);
+
+                PopulateIssuesGrid();
+                cmbxIssueCategory.Visible = false;
+                cmbxIssueType.Visible = false;
+                btnFilter.Visible = false;
+
+                UpdateLabels();
+            }
+        }
 
         private void btnFilter_Click(object sender, EventArgs e)
         {
@@ -99,8 +118,13 @@ namespace CodeCleanUpResharperToJiraConverter
 
         private void btnGenerateJira_Click(object sender, EventArgs e)
         {
-            var outputStringBuilder = new StringBuilder();
+            if (cmbxScmUrl.SelectedItem == null || string.IsNullOrWhiteSpace(cmbxScmUrl.SelectedItem.ToString()))
+            {
+                MessageBox.Show("Select Scm Url before generating Jira csv", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
+            var outputStringBuilder = new StringBuilder();
             outputStringBuilder.Append(GetHeaderRow());
 
             foreach (DataGridViewRow issueRow in issuesGridView.SelectedRows)
@@ -116,7 +140,6 @@ namespace CodeCleanUpResharperToJiraConverter
 
         private void cmbxIssueCategory_SelectedIndexChanged(object sender, EventArgs e)
         {
-
             if (string.IsNullOrWhiteSpace(cmbxIssueCategory.Text))
             {
                 var table = issuesGridView.DataSource as DataTable;
@@ -140,9 +163,9 @@ namespace CodeCleanUpResharperToJiraConverter
         {
             var issueStringBuilder = new StringBuilder();
 
-            issueStringBuilder.Append("Code Cleanup, Redknee, Multiproduct, " + WebSelfCareUrl + ", master, ");
+            issueStringBuilder.Append("Code Cleanup, Redknee, Multiproduct, " + cmbxScmUrl.SelectedItem + ", master, ");
 
-            if (_inputType == Resharper)
+            if (_inputType == InputType.Resharper)
             {
                 var jiraIssueType = MapResharperTypeIdToJiraIssueType(issueRow.Cells["TypeId"].Value.ToString());
                 issueStringBuilder.Append(jiraIssueType + ',');
@@ -152,10 +175,8 @@ namespace CodeCleanUpResharperToJiraConverter
                 issueStringBuilder.Append("\r\n");
             }
 
-            else if (_inputType == VStudioCodeAnalysis)
+            else if (_inputType == InputType.VisualStudioCodeMetrics)
             {
-
-                //var jiraIssueType = MapResharperTypeIdToJiraIssueType(issueRow.Cells["TypeId"].Value.ToString());
                 issueStringBuilder.Append("Long Methods" + ',');
                 issueStringBuilder.Append("Long Methods in " + issueRow.Cells["Namespace"].Value + '.' + issueRow.Cells["Type"].Value + ".cs" + ',');
                 issueStringBuilder.Append("Long Methods in " + issueRow.Cells["Namespace"].Value + '.' + issueRow.Cells["Type"].Value + '.' + issueRow.Cells["Member"].Value.ToString().Replace(',',' ') + 
@@ -190,18 +211,27 @@ namespace CodeCleanUpResharperToJiraConverter
 
         private void PopulateCategoryCombo()
         {
-            cmbxIssueCategory.DataSource = _dataSet.Tables[IssueTypeTable].Select().Select(item => item[CategoryColumn]).Distinct().ToList();
+            if (_inputType == InputType.Resharper)
+            {
+                cmbxIssueCategory.DataSource = _dataSet.Tables[IssueTypeTable].Select().Select(item => item[CategoryColumn]).Distinct().ToList();
+                return;
+            }
+
+            if (_inputType == InputType.VisualStudioCodeMetrics)
+            {
+                cmbxIssueCategory.DataSource = _dataSet.Tables[IssueTypeTable].Select().Select(item => item[CategoryColumn]).Distinct().ToList();
+            }
         }
 
         private void PopulateIssuesGrid()
         {
-            if (_inputType == VStudioCodeAnalysis)
+            if (_inputType == InputType.VisualStudioCodeMetrics)
             {
                 issuesGridView.DataSource = _dataSet.Tables[0];
                 return;
             }
 
-            if (_inputType == Resharper)
+            if (_inputType == InputType.Resharper)
             {
                 issuesGridView.DataSource = _dataSet.Tables[IssueTable];
             }
@@ -214,49 +244,22 @@ namespace CodeCleanUpResharperToJiraConverter
 
         #endregion Private methods
 
-        private void btnLoadCodeAnalysis_Click(object sender, EventArgs e)
-        {
-            _inputType = VStudioCodeAnalysis;
-
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Csv files | *.csv",
-                Multiselect = false
-            };
-
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                _filePath = dialog.FileName;
-
-                _dataSet = new DataSet();
-                var dataTable = GetDataTableFromCsv(_filePath, false);
-                _dataSet.Tables.Add(dataTable);
-                //_dataSet.ReadXml(_filePath);
-
-                PopulateIssuesGrid();
-                //PopulateCategoryCombo();
-
-                UpdateLabels();
-            }
-        }
+        
 
         static DataTable GetDataTableFromCsv(string path, bool isFirstRowHeader)
         {
-            string header = isFirstRowHeader ? "Yes" : "No";
+            var header = isFirstRowHeader ? "Yes" : "No";
+            var pathOnly = Path.GetDirectoryName(path);
+            var fileName = Path.GetFileName(path);
+            var sql = @"SELECT * FROM [" + fileName + "]";
 
-            string pathOnly = Path.GetDirectoryName(path);
-            string fileName = Path.GetFileName(path);
-
-            string sql = @"SELECT * FROM [" + fileName + "]";
-
-            using (OleDbConnection connection = new OleDbConnection(
+            using (var connection = new OleDbConnection(
                 @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + pathOnly +
                 ";Extended Properties=\"Text;HDR=" + header + "\""))
-            using (OleDbCommand command = new OleDbCommand(sql, connection))
-            using (OleDbDataAdapter adapter = new OleDbDataAdapter(command))
+            using (var command = new OleDbCommand(sql, connection))
+            using (var adapter = new OleDbDataAdapter(command))
             {
-                DataTable dataTable = new DataTable();
-                dataTable.Locale = CultureInfo.CurrentCulture;
+                var dataTable = new DataTable {Locale = CultureInfo.CurrentCulture};
                 adapter.Fill(dataTable);
 
                 dataTable.Columns[0].ColumnName = "Scope";
@@ -272,6 +275,11 @@ namespace CodeCleanUpResharperToJiraConverter
 
                 return dataTable;
             }
+        }
+
+        private void cmbxScmUrl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

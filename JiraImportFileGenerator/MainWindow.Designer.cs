@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnLoadIssues = new System.Windows.Forms.Button();
+            this.btnLoadResharperIssues = new System.Windows.Forms.Button();
             this.issuesGridView = new System.Windows.Forms.DataGridView();
             this.btnFilter = new System.Windows.Forms.Button();
             this.btnGenerateJira = new System.Windows.Forms.Button();
@@ -36,20 +36,21 @@
             this.lblNumberOfIssuesSelected = new System.Windows.Forms.Label();
             this.cmbxIssueType = new System.Windows.Forms.ComboBox();
             this.cmbxIssueCategory = new System.Windows.Forms.ComboBox();
-            this.btnLoadCodeAnalysis = new System.Windows.Forms.Button();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.btnLoadVSCodeMetrics = new System.Windows.Forms.Button();
+            this.cmbxScmUrl = new System.Windows.Forms.ComboBox();
+            this.lblScmUrl = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.issuesGridView)).BeginInit();
             this.SuspendLayout();
             // 
-            // btnLoadIssues
+            // btnLoadResharperIssues
             // 
-            this.btnLoadIssues.Location = new System.Drawing.Point(29, 27);
-            this.btnLoadIssues.Name = "btnLoadIssues";
-            this.btnLoadIssues.Size = new System.Drawing.Size(165, 30);
-            this.btnLoadIssues.TabIndex = 0;
-            this.btnLoadIssues.Text = "Load R# Issues";
-            this.btnLoadIssues.UseVisualStyleBackColor = true;
-            this.btnLoadIssues.Click += new System.EventHandler(this.btnLoadIssues_Click);
+            this.btnLoadResharperIssues.Location = new System.Drawing.Point(29, 27);
+            this.btnLoadResharperIssues.Name = "btnLoadResharperIssues";
+            this.btnLoadResharperIssues.Size = new System.Drawing.Size(165, 30);
+            this.btnLoadResharperIssues.TabIndex = 0;
+            this.btnLoadResharperIssues.Text = "Load R# Issues";
+            this.btnLoadResharperIssues.UseVisualStyleBackColor = true;
+            this.btnLoadResharperIssues.Click += new System.EventHandler(this.btnLoadResharperIssues_Click);
             // 
             // issuesGridView
             // 
@@ -126,31 +127,46 @@
             this.cmbxIssueCategory.TabIndex = 8;
             this.cmbxIssueCategory.SelectedIndexChanged += new System.EventHandler(this.cmbxIssueCategory_SelectedIndexChanged);
             // 
-            // btnLoadCodeAnalysis
+            // btnLoadVSCodeMetrics
             // 
-            this.btnLoadCodeAnalysis.Location = new System.Drawing.Point(221, 27);
-            this.btnLoadCodeAnalysis.Name = "btnLoadCodeAnalysis";
-            this.btnLoadCodeAnalysis.Size = new System.Drawing.Size(165, 30);
-            this.btnLoadCodeAnalysis.TabIndex = 9;
-            this.btnLoadCodeAnalysis.Text = "Load VS Analysis";
-            this.btnLoadCodeAnalysis.UseVisualStyleBackColor = true;
-            this.btnLoadCodeAnalysis.Click += new System.EventHandler(this.btnLoadCodeAnalysis_Click);
+            this.btnLoadVSCodeMetrics.Location = new System.Drawing.Point(221, 27);
+            this.btnLoadVSCodeMetrics.Name = "btnLoadVSCodeMetrics";
+            this.btnLoadVSCodeMetrics.Size = new System.Drawing.Size(165, 30);
+            this.btnLoadVSCodeMetrics.TabIndex = 9;
+            this.btnLoadVSCodeMetrics.Text = "Load VS Code Metrics";
+            this.btnLoadVSCodeMetrics.UseVisualStyleBackColor = true;
+            this.btnLoadVSCodeMetrics.Click += new System.EventHandler(this.btnLoadVSCodeMeterics_Click);
             // 
-            // comboBox1
+            // cmbxScmUrl
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(543, 657);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(479, 24);
-            this.comboBox1.TabIndex = 10;
+            this.cmbxScmUrl.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbxScmUrl.FormattingEnabled = true;
+            this.cmbxScmUrl.Items.AddRange(new object[] {
+            "https://github.com/DFRedKnee/turnkey-converged-billing-activation-portal.git",
+            "https://github.com/DFRedKnee/turnkey-converged-billing-web-self-care.git"});
+            this.cmbxScmUrl.Location = new System.Drawing.Point(400, 657);
+            this.cmbxScmUrl.Name = "cmbxScmUrl";
+            this.cmbxScmUrl.Size = new System.Drawing.Size(622, 24);
+            this.cmbxScmUrl.TabIndex = 10;
+            this.cmbxScmUrl.SelectedIndexChanged += new System.EventHandler(this.cmbxScmUrl_SelectedIndexChanged);
+            // 
+            // lblScmUrl
+            // 
+            this.lblScmUrl.AutoSize = true;
+            this.lblScmUrl.Location = new System.Drawing.Point(329, 660);
+            this.lblScmUrl.Name = "lblScmUrl";
+            this.lblScmUrl.Size = new System.Drawing.Size(57, 17);
+            this.lblScmUrl.TabIndex = 11;
+            this.lblScmUrl.Text = "ScmUrl:";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1236, 707);
-            this.Controls.Add(this.comboBox1);
-            this.Controls.Add(this.btnLoadCodeAnalysis);
+            this.Controls.Add(this.lblScmUrl);
+            this.Controls.Add(this.cmbxScmUrl);
+            this.Controls.Add(this.btnLoadVSCodeMetrics);
             this.Controls.Add(this.cmbxIssueCategory);
             this.Controls.Add(this.cmbxIssueType);
             this.Controls.Add(this.lblNumberOfIssuesSelected);
@@ -158,7 +174,7 @@
             this.Controls.Add(this.btnGenerateJira);
             this.Controls.Add(this.btnFilter);
             this.Controls.Add(this.issuesGridView);
-            this.Controls.Add(this.btnLoadIssues);
+            this.Controls.Add(this.btnLoadResharperIssues);
             this.Name = "Form1";
             this.Text = "Resharper to Jira Converter";
             ((System.ComponentModel.ISupportInitialize)(this.issuesGridView)).EndInit();
@@ -169,7 +185,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button btnLoadIssues;
+        private System.Windows.Forms.Button btnLoadResharperIssues;
         private System.Windows.Forms.DataGridView issuesGridView;
         private System.Windows.Forms.Button btnFilter;
         private System.Windows.Forms.Button btnGenerateJira;
@@ -177,8 +193,9 @@
         private System.Windows.Forms.Label lblNumberOfIssuesSelected;
         private System.Windows.Forms.ComboBox cmbxIssueType;
         private System.Windows.Forms.ComboBox cmbxIssueCategory;
-        private System.Windows.Forms.Button btnLoadCodeAnalysis;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.Button btnLoadVSCodeMetrics;
+        private System.Windows.Forms.ComboBox cmbxScmUrl;
+        private System.Windows.Forms.Label lblScmUrl;
     }
 }
 
