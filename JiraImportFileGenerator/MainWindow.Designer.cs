@@ -143,7 +143,9 @@
             this.cmbxScmUrl.FormattingEnabled = true;
             this.cmbxScmUrl.Items.AddRange(new object[] {
             "https://github.com/DFRedKnee/turnkey-converged-billing-activation-portal.git",
-            "https://github.com/DFRedKnee/turnkey-converged-billing-web-self-care.git"});
+            "https://github.com/DFRedKnee/turnkey-converged-billing-web-self-care.git",
+            "https://github.com/trilogy-group/gfi-mail-archiver",
+            "https://github.com/trilogy-group/gfi-oneguard"});
             this.cmbxScmUrl.Location = new System.Drawing.Point(400, 657);
             this.cmbxScmUrl.Name = "cmbxScmUrl";
             this.cmbxScmUrl.Size = new System.Drawing.Size(622, 24);
