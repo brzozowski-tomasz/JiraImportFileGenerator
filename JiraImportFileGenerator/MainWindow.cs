@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.Globalization;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using JiraImportFileGenerator;
+using Newtonsoft.Json;
 
 namespace CodeCleanUpResharperToJiraConverter
 {
@@ -91,6 +93,82 @@ namespace CodeCleanUpResharperToJiraConverter
 
                 UpdateLabels();
             }
+        }
+
+        private void btnLoadJiraTickets_Click(object sender, EventArgs e)
+        {
+            _inputType = InputType.JiraTickets;
+
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Csv files | *.csv",
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                _filePath = dialog.FileName;
+
+                _dataSet = new DataSet();
+                var dataTable = GetDataTableFromCsv(_filePath);
+                _dataSet.Tables.Add(dataTable);
+
+                AnalyzeDuplicateCodeTickets();
+
+                PopulateIssuesGrid();
+                cmbxIssueCategory.Visible = false;
+                cmbxIssueType.Visible = false;
+                btnFilter.Visible = false;
+
+                UpdateLabels();
+            }
+        }
+
+        private void AnalyzeDuplicateCodeTickets()
+        {
+            var tickets = _dataSet.Tables[0];
+
+            var files = new Dictionary<string, List<DuplicateBlock>>();
+            foreach (DataRow ticket in tickets.Rows)
+            {
+                var description = ticket["Description"].ToString();
+                var startIndex = description.IndexOf("[");
+                var endIndex = description.IndexOf("]");
+                if (startIndex > -1 && endIndex > startIndex)
+                {
+                    var json = description.Substring(startIndex, endIndex - startIndex + 1);
+                    var duplicates = JsonConvert.DeserializeObject<DuplicateBlock[]>(json);
+                    foreach (var duplicate in duplicates)
+                    {
+                        if (files.ContainsKey(duplicate.relFile) == false)
+                        {
+                            files[duplicate.relFile] = new List<DuplicateBlock>();
+                        }
+
+                        duplicate.beginLine = duplicate.endLine - duplicate.countLineCode;
+                        duplicate.ticketId = ticket["Issue key"].ToString();
+                        files[duplicate.relFile].Add(duplicate);
+                    }
+                }
+            }
+
+            var filesTable = new DataTable();
+            filesTable.Columns.Add("File");
+            filesTable.Columns.Add("Tickets");
+            filesTable.Columns.Add("FileLoC");
+            filesTable.Columns.Add("TicketsLoC");
+
+            foreach (var file in files.OrderByDescending(f => ((double)f.Value.Sum(e=>e.endLine - e.beginLine))/((double)f.Value.Max(e=>e.endLine) - f.Value.Min(e=>e.beginLine))))
+            {
+                var row = filesTable.NewRow();
+                row["File"] = file.Key;
+                row["FileLoC"] = file.Value.Max(e=>e.endLine) - file.Value.Min(e=>e.beginLine);
+                row["TicketsLoC"] = file.Value.Sum(e=>e.endLine - e.beginLine);
+                row["Tickets"] = file.Value.Select(e=>e.ticketId).Distinct().Count();
+                filesTable.Rows.Add(row);
+            }
+
+            _dataSet.Tables.Add(filesTable);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -231,6 +309,12 @@ namespace CodeCleanUpResharperToJiraConverter
                 return;
             }
 
+            if (_inputType == InputType.JiraTickets)
+            {
+                issuesGridView.DataSource = _dataSet.Tables[1];
+                return;
+            }
+
             if (_inputType == InputType.Resharper)
             {
                 issuesGridView.DataSource = _dataSet.Tables[IssueTable];
@@ -273,6 +357,26 @@ namespace CodeCleanUpResharperToJiraConverter
                 dataTable.Columns[8].ColumnName = "Class coupling";
                 dataTable.Columns[9].ColumnName = "LOC";
 
+                return dataTable;
+            }
+        }
+
+        static DataTable GetDataTableFromCsv(string path)
+        {
+            var header = "Yes";
+            var pathOnly = Path.GetDirectoryName(path);
+            var fileName = Path.GetFileName(path);
+            var sql = @"SELECT * FROM [" + fileName + "]";
+
+            using (var connection = new OleDbConnection(
+                @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + pathOnly +
+                ";Extended Properties=\"Text;HDR=" + header + "\""))
+            using (var command = new OleDbCommand(sql, connection))
+            using (var adapter = new OleDbDataAdapter(command))
+            {
+                var dataTable = new DataTable {Locale = CultureInfo.CurrentCulture};
+                adapter.Fill(dataTable);
+                
                 return dataTable;
             }
         }

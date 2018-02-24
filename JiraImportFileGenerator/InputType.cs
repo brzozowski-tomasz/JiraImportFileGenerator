@@ -10,6 +10,7 @@ namespace JiraImportFileGenerator
     {
         Resharper,
         VisualStudioCodeMetrics,
+        JiraTickets,
         Undefined
     }
 }
